@@ -1,0 +1,30 @@
+buildscript {
+	ext {
+		warPluginVersion = '3.0.0'
+	}
+	repositories {
+		mavenCentral()
+	}
+	dependencies {
+		classpath("org.apache.maven.plugins:maven-war-plugin:${warPluginVersion}")
+	}
+}
+
+apply plugin: 'war'
+
+war {
+	baseName = 'hystrix-dashboard'
+	version = '0.0.1'
+}
+
+repositories {
+	mavenCentral()
+}
+
+
+dependencies {
+  compile('javax.websocket:javax.websocket-api:1.1')
+	compile('com.rabbitmq:amqp-client:3.6.5')
+	compile('org.json:json:20160810')
+	testCompile('junit:junit:4.8.2')
+}

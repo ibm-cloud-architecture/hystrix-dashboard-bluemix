@@ -2,7 +2,7 @@
 
 #IMAGE_NAME=netflix-hystrix
 MAVEN_BUILD_TARGET=target/hystrix-dashboard-0.0.1.war
-#GRADLE_BUILD_TARGET=build/libs/hystrix-dashboard-0.0.1-SNAPSHOT.jar
+GRADLE_BUILD_TARGET=build/libs/hystrix-dashboard-0.0.1.war
 
 while getopts "md" ARG; do
   case ${ARG} in
@@ -10,8 +10,7 @@ while getopts "md" ARG; do
       USE_MAVEN='yes'
       ;;
     d)
-      echo "[ERROR]: This is the Hystrix Dashboard cf version only. It can not be containerized."
-      exit 1
+      echo "[WARNING]: DO_DOCKER flag detected. However, the Hystrix Dashboard cf version will not be containerized. There is another Hystrix Dashboard project specific for containers."
       ;;
   esac
 done
@@ -22,11 +21,9 @@ if [[ ${USE_MAVEN} == 'yes' ]]; then
     #cp ${MAVEN_BUILD_TARGET} docker/app.jar
   #fi
 else
-  echo "[ERROR]: This is the Hystrix Dashboard cf version only. It can not be containerized."
-  exit 1
-  #./gradlew clean build
+  ./gradlew clean build
   #if [[ ${DO_DOCKER} == 'yes' ]]; then
-	#cp ${GRADLE_BUILD_TARGET} docker/app.jar
+	 #cp ${GRADLE_BUILD_TARGET} docker/app.jar
   #fi
 fi
 
