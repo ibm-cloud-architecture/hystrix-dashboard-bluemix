@@ -1,7 +1,7 @@
 
 /**
- * Implement streaming of Hystrix metrics over a websocket 
- * Follows same logic as SEE streaming in 
+ * Implement streaming of Hystrix metrics over a websocket
+ * Follows same logic as SEE streaming in
  * com.netflix.hystrix.contrib.metrics.eventstreamHystrixMetricsStreamServlet
  */
 
@@ -47,7 +47,7 @@ public class HystrixMetricsWebSocket {
     public void removeSession(Session session) {
         sessions.remove(session);
     }
-	
+
 
     private final static String EXCHANGE_NAME = "springCloudHystrixStream";
     private final static String QUEUE_NAME    = "#";
@@ -60,7 +60,7 @@ public class HystrixMetricsWebSocket {
     private Thread metricsLoop = null;
 
 
-	
+
 	@OnOpen
 	public void onOpen(Session session, EndpointConfig ec) {
 		// Store the WebSocket session for later use.
@@ -70,30 +70,30 @@ public class HystrixMetricsWebSocket {
             metricsLoop  = new Thread (new MetricsLoop());
             metricsLoop.start();
         }
-        
+
 	}
-			
+
 	@OnMessage
 	public void receiveMessage(String messageIn) {
       // not used
         System.out.println("HystrixMetricsWebSocket: OnMessage " + messageIn);
 	}
 
-	
+
 	@OnClose
 	public void onClose(Session session, CloseReason reason) {
 		System.out.println("HystrixMetricsWebSocket: OnClose " + reason);
         removeSession(session);
 	}
-	
+
 	@OnError
 	public void onError(Throwable t) {
 		System.err.println("HystrixMetricsWebSocket: OnError " + t);
 		t.printStackTrace();
 	}
-	
+
 	/**
-	 * Send a message to all clients 
+	 * Send a message to all clients
 	 * @param message
 	 */
 	public void sendMessage(String message){
@@ -111,7 +111,7 @@ public class HystrixMetricsWebSocket {
 	   }
     }
 
- 
+
 
     private  static boolean initRMQ() {
 
@@ -120,13 +120,14 @@ public class HystrixMetricsWebSocket {
         //Process VCAP
         //RMQ service can be in VCAP under variety of names depending on the environment
         //e.g. compose-rabbitmq-dedicated OR compose-for-rabbitmq OR rabbitmq
-        String pattern = ".*rabbitmq.*";
+        //String pattern = ".*rabbitmq.*";
+        String pattern = ".*cloudamqp.*";
         // Create a Pattern object
         Pattern r = Pattern.compile(pattern);
         VCapServices vservices = new VCapServices();
         IVCapService rmq = vservices.getVCapService(r,0);
         IVCapServiceCredentials cred = rmq.getCredentials();
-        
+
         if (cred == null) {
                 System.err.println("HystrixMetricsWebSocket: VCAP_SERVICES environment variable not found, initialization failed");
                 return false;
@@ -134,7 +135,7 @@ public class HystrixMetricsWebSocket {
 
         uri = cred.getURI();
         System.out.println("HystrixMetricsWebSocket: VCAP connection uri " + uri);
-      
+
 
         //initilize RMQ connection/channel
         try {
@@ -142,7 +143,7 @@ public class HystrixMetricsWebSocket {
             factory.setUri(uri);
             factory.setRequestedHeartbeat(120);
             connection = factory.newConnection();
-            channel = connection.createChannel();   
+            channel = connection.createChannel();
             //a durable, non-autodelete exchange of "direct" type
             channel.exchangeDeclare(EXCHANGE_NAME, "topic", true);
             //a durable, non-exclusive, non-autodelete queue with a well-known name
@@ -170,7 +171,7 @@ public class HystrixMetricsWebSocket {
             if (!isConnected) {
                 System.err.println("HystrixMetricsCollectionServlet: can't connect to RMQ, exiting message loop");
                 return;
-            }   
+            }
 
             while (isConnected) {
                 try {
@@ -179,7 +180,7 @@ public class HystrixMetricsWebSocket {
                     channel.basicConsume(QUEUE_NAME, noAck, consumer);
                     boolean runInfinite = true;
                     while (runInfinite) {
-                        //get a message from RMQ 
+                        //get a message from RMQ
                         QueueingConsumer.Delivery delivery;
                         try {
                             delivery = consumer.nextDelivery();
@@ -198,7 +199,7 @@ public class HystrixMetricsWebSocket {
                 */
                         message = extractData(message);
                         //push tha message to the browser dashnoard via web socket
-                        sendMessage(message);  
+                        sendMessage(message);
                     }
                 } catch (IOException ioe) {
                         System.err.println("HystrixMetricsWebSocket:  error getting message from RMQ " + ioe);
@@ -211,16 +212,16 @@ public class HystrixMetricsWebSocket {
                         }
 
 
-                }  
-            }                   
-        }  
+                }
+            }
+        }
 
         private String extractData (String message) {
             JSONObject obj = new JSONObject(message);
             obj = (JSONObject) obj.get("data");
             return obj.toString();
 
-        }  
+        }
     }
 
 }
